@@ -39,6 +39,53 @@ MainTab:CreateButton({
         end
     end
 })
+MainTab:CreateToggle({
+    Name = "Rimuovi Barriere",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.RemoveBarriers = v
+        if v then
+            local lobbyBox = workspace:FindFirstChild("LobbyCollideBox", true)
+            if lobbyBox then
+                for _, part in pairs(lobbyBox:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                        part.Transparency = 1
+                    end
+                end
+            end
+            
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and obj.Name == "Barrier" then
+                    obj.CanCollide = false
+                    obj.Transparency = 1
+                end
+            end
+            
+            _G.Rayfield:Notify({
+                Title = "Hace HUB",
+                Content = "Barriere rimosse con successo!",
+                Duration = 3
+            })
+        else
+            local lobbyBox = workspace:FindFirstChild("LobbyCollideBox", true)
+            if lobbyBox then
+                for _, part in pairs(lobbyBox:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
+            
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and obj.Name == "Barrier" then
+                    obj.CanCollide = true
+                end
+            end
+        end
+    end
+})
+
 MainTab:CreateButton({
     Name = "Unlock Camera",
     Callback = function()
