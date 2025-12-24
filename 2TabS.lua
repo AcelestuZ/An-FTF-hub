@@ -25,6 +25,19 @@ STab:CreateToggle({
     end
 })
 
+STab:CreateButton({
+    Name = "Noclip Doors (Once)",
+    Callback = function()
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v.Name == "SingleDoor" or v.Name == "DoubleDoor" then
+                for _, part in pairs(v:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = false end
+                end
+            end
+        end
+    end
+})
+
 STab:CreateSection("Locker System")
 
 STab:CreateToggle({
@@ -64,53 +77,47 @@ STab:CreateToggle({
     end
 })
 
-STab:CreateSection("Test")
+STab:CreateSection("Test Zone")
 
 STab:CreateToggle({
-    Name = "RootPart Proxy (Anti-Seer)",
+    Name = "Static Proxy Anti-Seer",
     CurrentValue = false,
     Callback = function(v)
-        _G.AntiSeerProxy = v
+        _G.StaticAntiSeer = v
+        local remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
+        
         if v then
             task.spawn(function()
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
-                local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+                local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
                 
-                while _G.AntiSeerProxy do
-                    local lockers = CollectionService:GetTagged("LOCKER")
-                    if #lockers > 0 and hrp then
-                        local targetLocker = lockers[1] 
-                        local lockerPart = targetLocker:FindFirstChildWhichIsA("BasePart", true)
-                        
-                        if lockerPart then
-                            local originalCF = hrp.CFrame
-                            
-                            hrp.CFrame = lockerPart.CFrame
-                            task.wait(0.05)
-                            remote:FireServer("SetPlayerHiding", true, targetLocker)
-                            
-                            task.wait(0.1)
-                            hrp.CFrame = originalCF
-                            
-                            _G.Rayfield:Notify({Title = "Test Hub", Content = "HRP Proxy inviato al Locker!", Duration = 2})
-                        end
-                    end
-                    task.wait(5)
+                -[span_2](start_span)- Find the nearest locker using the official tag[span_2](end_span)
+                local lockers = CollectionService:GetTagged("LOCKER")
+                local targetLocker = lockers[1]
+                if not targetLocker then 
+                    _G.Rayfield:Notify({Title = "Test Hub", Content = "No Locker found!", Duration = 3})
+                    return 
                 end
+
+                _G.Rayfield:Notify({Title = "Test Hub", Content = "Proxy active in Locker #1", Duration = 3})
+
+                while _G.StaticAntiSeer do
+                    -- Instead of TPing the player, we only send the server 
+                    -[span_3](start_span)[span_4](start_span)- the signal that we are inside the target locker[span_3](end_span)[span_4](end_span)
+                    pcall(function()
+                        remote:FireServer("SetPlayerHiding", true, targetLocker)
+                    end)
+                    
+                    -[span_5](start_span)- We wait a bit more than the game's heartbeat check (8 frames)[span_5](end_span)
+                    task.wait(0.5) 
+                end
+                
+                -- When disabled, tell the server we are out
+                remote:FireServer("SetPlayerHiding", false)
             end)
+        else
+            remote:FireServer("SetPlayerHiding", false)
         end
     end
 })
 
-STab:CreateButton({
-    Name = "Noclip Doors (Once)",
-    Callback = function()
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v.Name == "SingleDoor" or v.Name == "DoubleDoor" then
-                for _, part in pairs(v:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
-                end
-            end
-        end
-    end
-})
