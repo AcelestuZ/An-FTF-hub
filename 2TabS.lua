@@ -21,6 +21,46 @@ STab:CreateToggle({
     end
 })
 
+STab:CreateToggle({
+    Name = "Auto-No Seek",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AutoNoSeek = v
+        if v then
+            task.spawn(function()
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
+                local hasNotified = false
+                
+                while _G.AutoNoSeek do
+                    local target = nil
+                    for _, name in pairs({"HidingCloset", "HiddenCloset", "Locker", "Loker2"}) do
+                        local found = workspace:FindFirstChild(name, true)
+                        if found then target = found break end
+                    end
+                    
+                    if target then
+                        pcall(function()
+                            remote:FireServer("SetPlayerHiding", true, target)
+                        end)
+                        hasNotified = false
+                    elseif not hasNotified then
+                        _G.Rayfield:Notify({
+                            Title = "Errore Nascondiglio",
+                            Content = "Non ci sono posti in cui nascondersi in questa mappa!",
+                            Duration = 5
+                        })
+                        hasNotified = true
+                    end
+                    task.wait(0.5)
+                end
+                
+                local r = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
+                if r then r:FireServer("SetPlayerHiding", false) end
+            end)
+        end
+    end
+})
+
 STab:CreateButton({
     Name = "Noclip Doors (Once)",
     Callback = function()
