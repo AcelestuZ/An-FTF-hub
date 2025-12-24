@@ -1,6 +1,9 @@
 -- Tab Survivors
-local STab = _G.HubWindow:CreateTab("Survivors", 4483362458)
+ local STab = _G.HubWindow:CreateTab("Survivors", 4483362458)
 local lp = game:GetService("Players").LocalPlayer
+local CollectionService = game:GetService("CollectionService")
+
+STab:CreateSection("Utility")
 
 STab:CreateToggle({
     Name = "No PC Error",
@@ -22,68 +25,78 @@ STab:CreateToggle({
     end
 })
 
+STab:CreateSection("Locker System")
+
 STab:CreateToggle({
-    Name = "Auto-No Seer + TP",
+    Name = "Cycle Anti-Seer TP",
     CurrentValue = false,
     Callback = function(v)
-        _G.AutoNoSeer = v
+        local remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
+        local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+        local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+        
+        if v then
+            local foundLockers = CollectionService:GetTagged("LOCKER")
+            if #foundLockers > 0 then
+                _G.LockerIndex = (_G.LockerIndex or 0) + 1
+                if _G.LockerIndex > #foundLockers or _G.LockerIndex > 4 then _G.LockerIndex = 1 end
+
+                local target = foundLockers[_G.LockerIndex]
+                local tpPart = target:FindFirstChildWhichIsA("BasePart", true)
+                
+                if tpPart and hrp then
+                    if CollectionService:HasTag(target, "MUST_CRAWL") then
+                        remote:FireServer("Input", "Crawl", true)
+                        if hum then hum.HipHeight = -2 end
+                    end
+                    hrp.CFrame = tpPart.CFrame + Vector3.new(0, 2, 0)
+                    task.wait(0.1)
+                    remote:FireServer("SetPlayerHiding", true, target)
+                end
+            end
+        else
+            if remote then 
+                remote:FireServer("SetPlayerHiding", false)
+                remote:FireServer("Input", "Crawl", false)
+            end
+            if hum then hum.HipHeight = 0 end
+        end
+    end
+})
+
+STab:CreateSection("Test")
+
+STab:CreateToggle({
+    Name = "RootPart Proxy (Anti-Seer)",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AntiSeerProxy = v
         if v then
             task.spawn(function()
                 local remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
-                local hasNotified = false
-                while _G.AutoNoSeer do
-                    local target = nil
-                    local minDist = math.huge
-                    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-                    
-                    if hrp then
-                        for _, obj in pairs(workspace:GetDescendants()) do
-                            local isValid = false
-                            if obj:IsA("Model") then
-                                if table.find({"HidingCloset", "HiddenCloset", "Locker", "Loker2", "Locker 2"}, obj.Name) then
-                                    isValid = true
-                                elseif obj.Name == "Model" then
-                                    if obj:FindFirstChild("Union", true) then
-                                        isValid = true
-                                    elseif obj:FindFirstChildWhichIsA("Model", true) then
-                                        local subModel = obj:FindFirstChildWhichIsA("Model", true)
-                                        local p = subModel:FindFirstChildWhichIsA("Part", true)
-                                        if p and p:FindFirstChildOfClass("Decal") then
-                                            isValid = true
-                                        end
-                                    end
-                                end
-                            end
-
-                            if isValid then
-                                local p = obj:FindFirstChildWhichIsA("BasePart", true) or obj:FindFirstChild("Union", true)
-                                if p then
-                                    local d = (hrp.Position - p.Position).Magnitude
-                                    if d < minDist then
-                                        minDist = d
-                                        target = obj
-                                    end
-                                end
-                            end
-                        end
-                    end
-
-                    if target then
-                        local tpPart = target:FindFirstChildWhichIsA("BasePart", true) or target:FindFirstChild("Union", true)
-                        if tpPart then
-                            hrp.CFrame = tpPart.CFrame + Vector3.new(0, 2, 0)
+                local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+                
+                while _G.AntiSeerProxy do
+                    local lockers = CollectionService:GetTagged("LOCKER")
+                    if #lockers > 0 and hrp then
+                        local targetLocker = lockers[1] 
+                        local lockerPart = targetLocker:FindFirstChildWhichIsA("BasePart", true)
+                        
+                        if lockerPart then
+                            local originalCF = hrp.CFrame
+                            
+                            hrp.CFrame = lockerPart.CFrame
+                            task.wait(0.05)
+                            remote:FireServer("SetPlayerHiding", true, targetLocker)
+                            
                             task.wait(0.1)
-                            remote:FireServer("SetPlayerHiding", true, target)
+                            hrp.CFrame = originalCF
+                            
+                            _G.Rayfield:Notify({Title = "Test Hub", Content = "HRP Proxy inviato al Locker!", Duration = 2})
                         end
-                        hasNotified = false
-                    elseif not hasNotified then
-                        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Non ci sono punti dove nascondersi!", Duration = 5})
-                        hasNotified = true
                     end
-                    task.wait(0.5)
+                    task.wait(5)
                 end
-                local r = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
-                if r then r:FireServer("SetPlayerHiding", false) end
             end)
         end
     end
@@ -95,9 +108,7 @@ STab:CreateButton({
         for _, v in pairs(workspace:GetDescendants()) do
             if v.Name == "SingleDoor" or v.Name == "DoubleDoor" then
                 for _, part in pairs(v:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+                    if part:IsA("BasePart") then part.CanCollide = false end
                 end
             end
         end
