@@ -58,3 +58,48 @@ TPTab:CreateButton({
         end
     end
 })
+
+TPTab:CreateSection("Special Exploits")
+
+local function fullUnlock()
+    local stats = lp:FindFirstChild("TempPlayerStatsModule")
+    local loadVal = lp:FindFirstChild("IsCheckingLoadData")
+    
+    if loadVal then loadVal.Value = false end
+    
+    if stats then
+        local module = require(stats)
+        pcall(function()
+            module.SetValue("Health", 100)
+            module.SetValue("IsCheckingLoadData", false)
+            module.SetValue("ActionProgress", 0)
+        end)
+    end
+    
+    local screenGui = lp.PlayerGui:FindFirstChild("ScreenGui")
+    if screenGui then
+        if screenGui:FindFirstChild("SpectatorFrame") then screenGui.SpectatorFrame.Visible = false end
+        if screenGui:FindFirstChild("ActionBox") then screenGui.ActionBox.Visible = true end
+    end
+    
+    _G.Rayfield:Notify({Title = "Exploit", Content = "Full Interaction Unlocked!", Duration = 3})
+end
+
+TPTab:CreateButton({
+    Name = "FORCE FULL UNLOCK (Hacking, Save, Exit)",
+    Callback = fullUnlock
+})
+
+TPTab:CreateToggle({
+    Name = "God-State Loop (Anti-Death Block)",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.GodStateLoop = v
+        task.spawn(function()
+            while _G.GodStateLoop do
+                pcall(fullUnlock)
+                task.wait(2)
+            end
+        end)
+    end
+})
