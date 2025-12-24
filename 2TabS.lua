@@ -40,42 +40,78 @@ STab:CreateButton({
 
 STab:CreateSection("Locker System")
 
-STab:CreateToggle({
-    Name = "Cycle Anti-Seer TP",
-    CurrentValue = false,
-    Callback = function(v)
+STab:CreateButton({
+    Name = "Cycle Anti-Seer TP (Tap to Cycle)",
+    Callback = function()
         local remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
-        local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-        local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+        local char = lp.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
         
-        if v then
-            local foundLockers = CollectionService:GetTagged("LOCKER")
-            if #foundLockers > 0 then
-                _G.LockerIndex = (_G.LockerIndex or 0) + 1
-                if _G.LockerIndex > #foundLockers or _G.LockerIndex > 4 then _G.LockerIndex = 1 end
+        if not hrp or not hum then return end
 
-                local target = foundLockers[_G.LockerIndex]
-                local tpPart = target:FindFirstChildWhichIsA("BasePart", true)
+        local foundLockers = CollectionService:GetTagged("LOCKER")
+        if #foundLockers > 0 then
+            -- Logic: Cycle through the first 4 tagged lockers
+            _G.LockerIndex = (_G.LockerIndex or 0) + 1
+            if _G.LockerIndex > #foundLockers or _G.LockerIndex > 4 then _G.LockerIndex = 1 end
+
+            local target = foundLockers[_G.LockerIndex]
+            local tpPart = target:FindFirstChildWhichIsA("BasePart", true)
+            
+            if tpPart then
+                -- FIX: Stop momentum and anchor to prevent TP glitches while moving
+                hrp.AssemblyLinearVelocity = Vector3.new(0,0,0)
+                hrp.Anchored = true 
                 
-                if tpPart and hrp then
-                    if CollectionService:HasTag(target, "MUST_CRAWL") then
-                        remote:FireServer("Input", "Crawl", true)
-                        if hum then hum.HipHeight = -2 end
-                    end
-                    hrp.CFrame = tpPart.CFrame + Vector3.new(0, 2, 0)
-                    task.wait(0.1)
-                    remote:FireServer("SetPlayerHiding", true, target)
+                -- Check MUST_CRAWL tag from game files
+                local mustCrawl = CollectionService:HasTag(target, "MUST_CRAWL")
+                if mustCrawl then
+                    remote:FireServer("Input", "Crawl", true)
+                    hum.HipHeight = -2
+                else
+                    remote:FireServer("Input", "Crawl", false)
+                    hum.HipHeight = 0
                 end
+
+                -- Precise Teleport
+                hrp.CFrame = tpPart.CFrame + Vector3.new(0, 2, 0)
+                
+                -- Tell server we are hiding
+                task.wait(0.1)
+                remote:FireServer("SetPlayerHiding", true, target)
+                
+                -- Release player after server registers position
+                task.wait(0.1)
+                hrp.Anchored = false
+                
+                _G.Rayfield:Notify({
+                    Title = "Hace HUB", 
+                    Content = "Teleported to Locker #".._G.LockerIndex, 
+                    Duration = 2
+                })
             end
         else
-            if remote then 
-                remote:FireServer("SetPlayerHiding", false)
-                remote:FireServer("Input", "Crawl", false)
-            end
-            if hum then hum.HipHeight = 0 end
+            _G.Rayfield:Notify({Title = "Hace HUB", Content = "No Tagged Lockers found!", Duration = 3})
         end
     end
 })
+
+STab:CreateButton({
+    Name = "Exit Locker / Reset State",
+    Callback = function()
+        local remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
+        local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+        
+        if remote then
+            remote:FireServer("SetPlayerHiding", false)
+            remote:FireServer("Input", "Crawl", false)
+        end
+        if hum then hum.HipHeight = 0 end
+        _G.Rayfield:Notify({Title = "Hace HUB", Content = "State Reset", Duration = 2})
+    end
+})
+
 
 STab:CreateSection("Test Zone")
 
