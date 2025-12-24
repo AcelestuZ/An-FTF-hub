@@ -103,3 +103,169 @@ TPTab:CreateToggle({
         end)
     end
 })
+
+TPTab:CreateSection("Server-Side Exploits")
+
+local function applyServerBypass()
+    local mt = getrawmetatable(game)
+    local old = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local args = {...}
+        local method = getnamecallmethod()
+        if method == "FireServer" and self.Name == "RemoteEvent" then
+            if args[1] == "Input" and args[2] == "Trigger" and args[3] == false then
+                args[3] = true
+                return old(self, unpack(args))
+            end
+        end
+        return old(self, ...)
+    end)
+    setreadonly(mt, true)
+end
+
+local function forceEscape()
+    pcall(function()
+        local re = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
+        if re then
+            re:FireServer("SetPlayerStats", {["Escaped"] = true})
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name == "InsideArea" then
+                    firetouchinterest(lp.Character.HumanoidRootPart, v, 0)
+                    firetouchinterest(lp.Character.HumanoidRootPart, v, 1)
+                end
+            end
+        end
+    end)
+end
+
+TPTab:CreateButton({
+    Name = "ACTIVATE SERVER BYPASS (Hook)",
+    Callback = function()
+        applyServerBypass()
+        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Server-Side Bypass Attivo!", Duration = 3})
+    end
+})
+
+TPTab:CreateButton({
+    Name = "INSTANT WIN (Escape)",
+    Callback = function()
+        forceEscape()
+        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Tentativo di fuga inviato!", Duration = 3})
+    end
+})
+
+TPTab:CreateToggle({
+    Name = "Ghost Mode (UI Unlock)",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.GhostLoop = v
+        task.spawn(function()
+            while _G.GhostLoop do
+                pcall(function()
+                    local stats = lp:FindFirstChild("TempPlayerStatsModule")
+                    if stats then
+                        local m = require(stats)
+                        m.SetValue("IsCheckingLoadData", false)
+                        m.SetValue("Health", 100)
+                    end
+                    local gui = lp.PlayerGui:FindFirstChild("ScreenGui")
+                    if gui and gui:FindFirstChild("SpectatorFrame") then
+                        gui.SpectatorFrame.Visible = false
+                        gui.ActionBox.Visible = true
+                    end
+                end)
+                task.wait(1)
+            end
+        end)
+    end
+})
+
+TPTab:CreateSection("Self-Rescue & Survival")
+
+TPTab:CreateButton({
+    Name = "SELF RESCUE (Instant Escape Pod)",
+    Callback = function()
+        local stats = lp:FindFirstChild("TempPlayerStatsModule")
+        if stats then
+            local m = require(stats)
+            m.SetValue("StruggleProgress", 100)
+            m.SetValue("IsFrozen", false)
+            m.SetValue("Health", 100)
+        end
+        local re = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
+        if re then
+            re:FireServer("Input", "Struggle", true)
+            re:FireServer("Input", "Struggle", false)
+        end
+        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            lp.Character.HumanoidRootPart.Anchored = false
+        end
+    end
+})
+
+TPTab:CreateToggle({
+    Name = "Anti-Ragdoll (No Stun)",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AntiStun = v
+        task.spawn(function()
+            local stats = lp:FindFirstChild("TempPlayerStatsModule")
+            if not stats then return end
+            local m = require(stats)
+            while _G.AntiStun do
+                if m.GetValue("IsStunned") or m.GetValue("IsDown") then
+                    m.SetValue("IsStunned", false)
+                    m.SetValue("IsDown", false)
+                    m.SetValue("Health", 100)
+                    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+                        lp.Character.Humanoid.PlatformStand = false
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+})
+
+TPTab:CreateButton({
+    Name = "Invisible to Beast (Ghost State)",
+    Callback = function()
+        local stats = lp:FindFirstChild("TempPlayerStatsModule")
+        if stats then
+            local m = require(stats)
+            m.SetValue("IsHidden", true)
+            m.SetValue("IsCheckingLoadData", false)
+        end
+    end
+})
+
+TPTab:CreateButton({
+    Name = "ANTY-TIRE (Instant Untie)",
+    Callback = function()
+        pcall(function()
+            local stats = lp:FindFirstChild("TempPlayerStatsModule")
+            local re = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
+            if stats then
+                local m = require(stats)
+                m.SetValue("IsDown", false)
+                m.SetValue("IsStunned", false)
+                m.SetValue("StruggleProgress", 100)
+                m.SetValue("Health", 100)
+            end
+            if re then
+                re:FireServer("Input", "Struggle", true)
+            end
+            if lp.Character then
+                for _, v in pairs(lp.Character:GetDescendants()) do
+                    if v:IsA("RopeConstraint") or v.Name == "Tire" or v.Name == "Cords" then
+                        v:Destroy()
+                    end
+                end
+                if lp.Character:FindFirstChild("Humanoid") then
+                    lp.Character.Humanoid.PlatformStand = false
+                end
+            end
+        end)
+    end
+})
