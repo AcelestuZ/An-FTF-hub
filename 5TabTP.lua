@@ -1,6 +1,5 @@
 -- Teleport Tab
 local TPTab = _G.HubWindow:CreateTab("Teleport", 4483362458)
-local TPTab = _G.HubWindow:CreateTab("Teleport", 4483362458)
 local lp = game:GetService("Players").LocalPlayer
 
 local function SafeTeleport(cframe, loc, mapPath)
