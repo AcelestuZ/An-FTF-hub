@@ -1,5 +1,5 @@
 -- ESP tab
-    local ESPTab = _G.HubWindow:CreateTab("ESP", 4483362458)
+  local ESPTab = _G.HubWindow:CreateTab("ESP", 4483362458)
 local lp = game:GetService("Players").LocalPlayer
 
 local BadgeIcons = {
