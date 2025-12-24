@@ -2,10 +2,9 @@
 local MainTab = _G.HubWindow:CreateTab("Main", 4483362458)
 local lp = game:GetService("Players").LocalPlayer
 local RunService = game:GetService("RunService")
-
+local UIS = game:GetService("UserInputService")
 _G.LoopSpeedEnabled = false
 _G.SpeedValue = 16
-
 MainTab:CreateToggle({
     Name = "Full Bright",
     CurrentValue = false,
@@ -20,7 +19,6 @@ MainTab:CreateToggle({
         end)
     end
 })
-
 MainTab:CreateToggle({
     Name = "No Fog",
     CurrentValue = false,
@@ -35,7 +33,6 @@ MainTab:CreateToggle({
         end)
     end
 })
-
 MainTab:CreateButton({
     Name = "Reset Character",
     Callback = function()
@@ -46,43 +43,27 @@ MainTab:CreateButton({
         end
     end
 })
-
 MainTab:CreateToggle({
-    Name = "Rimuovi Barriere",
+    Name = "Remove Barriers",
     CurrentValue = false,
     Callback = function(v)
         _G.RemoveBarriers = v
         if v then
-            local lobbyBox = workspace:FindFirstChild("LobbyCollideBox", true)
-            if lobbyBox then
-                for _, part in pairs(lobbyBox:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                        part.Transparency = 1
-                    end
-                end
-            end
             for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and obj.Name == "Barrier" then
+                if obj:IsA("BasePart") and (obj.Name == "Barrier" or obj.Parent.Name == "LobbyCollideBox") then
                     obj.CanCollide = false
                     obj.Transparency = 1
                 end
             end
-            _G.Rayfield:Notify({Title = "Hace HUB", Content = "Barriere rimosse!", Duration = 3})
         else
-            local lobbyBox = workspace:FindFirstChild("LobbyCollideBox", true)
-            if lobbyBox then
-                for _, part in pairs(lobbyBox:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = true end
-                end
-            end
             for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and obj.Name == "Barrier" then obj.CanCollide = true end
+                if obj:IsA("BasePart") and (obj.Name == "Barrier" or obj.Parent.Name == "LobbyCollideBox") then
+                    obj.CanCollide = true
+                end
             end
         end
     end
 })
-
 MainTab:CreateButton({
     Name = "Unlock Camera",
     Callback = function()
@@ -91,20 +72,17 @@ MainTab:CreateButton({
         lp.CameraMode = Enum.CameraMode.Classic
     end
 })
-
-MainTab:CreateSection("Movimento")
-
+MainTab:CreateSection("Movement")
 MainTab:CreateInput({
-   Name = "Velocità Camminata",
+   Name = "Walk Speed",
    PlaceholderText = "Default: 16",
    RemoveTextAfterFocusLost = false,
    Callback = function(Text)
       _G.SpeedValue = tonumber(Text) or 16
    end,
 })
-
 MainTab:CreateToggle({
-   Name = "Attiva LoopSpeed",
+   Name = "Enable LoopSpeed",
    CurrentValue = false,
    Callback = function(v)
       _G.LoopSpeedEnabled = v
@@ -112,81 +90,66 @@ MainTab:CreateToggle({
          task.spawn(function()
             local connection
             connection = RunService.Stepped:Connect(function()
-               if not _G.LoopSpeedEnabled then 
-                  connection:Disconnect() 
-                  return 
-               end
+               if not _G.LoopSpeedEnabled then connection:Disconnect() return end
                if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
                   lp.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = _G.SpeedValue
                end
             end)
          end)
-      else
-         if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
-            lp.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
-         end
       end
    end,
 })
 MainTab:CreateSection("Special Abilities")
-
 local function JumpCloudParticle()
     local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
-        local Part_3 = Instance.new("Part")
-        Part_3.Name = "DoubleJumpCloudParticle"
-        Part_3.Transparency = 1
-        Part_3.Size = Vector3.new(0.1, 0.1, 0.1)
-        Part_3.CanCollide = false
-        Part_3.Massless = true
-        Part_3.Anchored = true
-        Part_3.CFrame = hrp.CFrame - Vector3.new(0, 3.2, 0)
-        Part_3.Parent = workspace
-        
-        local ParticleEmitter_3 = Instance.new("ParticleEmitter")
-        ParticleEmitter_3.LightInfluence = 0
-        ParticleEmitter_3.Brightness = 2
-        ParticleEmitter_3.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(0.05, 1.2), NumberSequenceKeypoint.new(1, 0.4)})
-        ParticleEmitter_3.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.7, 0), NumberSequenceKeypoint.new(1, 1)})
-        ParticleEmitter_3.Lifetime = NumberRange.new(0.3)
-        ParticleEmitter_3.Speed = NumberRange.new(12)
-        ParticleEmitter_3.Acceleration = Vector3.new(0, 4, 0)
-        ParticleEmitter_3.SpreadAngle = Vector2.new(0, 180)
-        ParticleEmitter_3.Shape = Enum.ParticleEmitterShape.Disc
-        ParticleEmitter_3.Parent = Part_3
-        ParticleEmitter_3:Emit(24)
-        game:GetService("Debris"):AddItem(Part_3, 0.5)
+        local p = Instance.new("Part")
+        p.Transparency, p.Size, p.CanCollide, p.Massless, p.Anchored = 1, Vector3.new(0.1, 0.1, 0.1), false, true, true
+        p.CFrame = hrp.CFrame - Vector3.new(0, 3.2, 0)
+        p.Parent = workspace
+        local e = Instance.new("ParticleEmitter")
+        e.LightInfluence, e.Brightness = 0, 2
+        e.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(0.05, 1.2), NumberSequenceKeypoint.new(1, 0.4)})
+        e.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.7, 0), NumberSequenceKeypoint.new(1, 1)})
+        e.Lifetime, e.Speed, e.Acceleration, e.SpreadAngle, e.Shape = NumberRange.new(0.3), NumberRange.new(12), Vector3.new(0, 4, 0), Vector2.new(0, 180), Enum.ParticleEmitterShape.Disc
+        e.Parent = p
+        e:Emit(24)
+        game:GetService("Debris"):AddItem(p, 0.5)
     end
 end
-
-MainTab:CreateToggle({
-    Name = "Always Double Jump",
-    CurrentValue = false,
-    Callback = function(v)
-        _G.AlwaysDoubleJump = v
-        if v then
-            task.spawn(function()
-                while _G.AlwaysDoubleJump do
-                    local char = lp.Character
-                    if char then
-                        local hum = char:FindFirstChildOfClass("Humanoid")
-                        local hrp = char:FindFirstChild("HumanoidRootPart")
-                        
-                        -- Logica originale: Check Freefall (riga 590)
-                        if hum and hrp and hum:GetState() == Enum.HumanoidStateType.Freefall then
-                            -- Applichiamo la forza originale di 36 (riga 590)
-                            hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 36, hrp.AssemblyLinearVelocity.Z)
-                            
-                            -- Trigger particelle originali (riga 594)
-                            task.spawn(JumpCloudParticle)
-                            
-                            -- Rimosso il cooldown di 3 secondi (riga 591)
-                            task.wait(0.2) 
-                        end
-                    end
-                    task.wait()
+local canDoubleJump = false
+local hasDoubleJumped = false
+MainTab:CreateButton({
+    Name = "Activate Double Jump (No Cooldown)",
+    Callback = function()
+        if _G.DJConn then _G.DJConn:Disconnect() end
+        _G.DJConn = UIS.JumpRequest:Connect(function()
+            local char = lp.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hum and hrp then
+                if hum:GetState() == Enum.HumanoidStateType.Freefall and canDoubleJump and not hasDoubleJumped then
+                    hasDoubleJumped = true
+                    hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 36, hrp.AssemblyLinearVelocity.Z)
+                    task.spawn(JumpCloudParticle)
                 end
-            end)
-        end
+            end
+        end)
+        task.spawn(function()
+            while _G.DJConn do
+                local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    local state = hum:GetState()
+                    if state == Enum.HumanoidStateType.Landed then
+                        canDoubleJump = false
+                        hasDoubleJumped = false
+                    elseif state == Enum.HumanoidStateType.Jumping then
+                        canDoubleJump = true
+                    end
+                end
+                task.wait()
+            end
+        end)
+        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Double Jump Activated!", Duration = 2})
     end
 })
