@@ -98,3 +98,54 @@ TPTab:CreateSection("Classic Teleports")
 TPTab:CreateButton({Name = "TP Lobby Main", Callback = function() SafeTeleport(CFrame.new(157, 4, -344)) end})
 TPTab:CreateButton({Name = "TP to map", Callback = function() local pad = workspace:FindFirstChild("OBSpawnPad", true) if pad then SafeTeleport(pad.CFrame + Vector3.new(0, 3, 0)) end end})
 
+local function getBestPC()
+    local target = nil
+    local dist = math.huge
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "ComputerTable" and v:FindFirstChild("Screen") then
+            if v.Screen.Color ~= Color3.new(0, 1, 0) then
+                local d = (lp.Character.HumanoidRootPart.Position - v.Base.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    target = v
+                end
+            end
+        end
+    end
+    return target
+end
+
+TPTab:CreateSection("Auto-Hacker Farm")
+
+TPTab:CreateButton({
+    Name = "TP TO PC & START HACK",
+    Callback = function()
+        local pc = getBestPC()
+        if pc then
+            lp.Character.HumanoidRootPart.CFrame = pc.Base.CFrame * CFrame.new(0, 3, 2)
+            _G.Rayfield:Notify({Title = "Hacker", Content = "TP al PC più vicino effettuato!", Duration = 2})
+        end
+    end
+})
+
+TPTab:CreateToggle({
+    Name = "ACTIVE GOD-FINGER (Anti-Error)",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AntiError = v
+        task.spawn(function()
+            while _G.AntiError do
+                pcall(function()
+                    local stats = lp:FindFirstChild("TempPlayerStatsModule")
+                    if stats then
+                        local m = require(stats)
+                        if m.GetValue("IsHacking") then
+                            re:FireServer("Input", "Trigger", true)
+                        end
+                    end
+                end)
+                task.wait(0.05)
+            end
+        end)
+    end
+})
