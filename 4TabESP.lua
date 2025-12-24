@@ -19,6 +19,7 @@ local function UpdateESP(obj, col, txt, en, isP, pObj)
     local hH = obj:FindFirstChild("HubH")
     local hT = obj:FindFirstChild("HubT")
 
+    -- Highlight Logic
     if _G.ESP_Highlights and en and (pObj ~= lp) then
         local h = hH or Instance.new("Highlight")
         if not hH then h.Name = "HubH"; h.Parent = obj end
@@ -27,32 +28,35 @@ local function UpdateESP(obj, col, txt, en, isP, pObj)
         h.FillTransparency = isP and 0.2 or 0.85
     elseif hH then hH:Destroy() end
     
+    -- Name Tag Logic
     if _G.ESP_Names and en and txt then
         local tag = hT or Instance.new("BillboardGui")
         if not hT then
             tag.Name = "HubT"; tag.Size = UDim2.new(0,200,0,50); tag.AlwaysOnTop = true
             tag.Parent = obj
+            
             local l = Instance.new("TextLabel", tag)
-            l.Name = "L"; l.BackgroundTransparency = 1; l.Size = UDim2.new(1,0,1,0); l.TextSize = 14; l.Font = 3; l.TextStrokeTransparency = 0
+            l.Name = "L"; l.BackgroundTransparency = 1; l.Size = UDim2.new(1,0,1,0)
+            l.TextSize = 14; l.Font = Enum.Font.SourceSansBold; l.TextStrokeTransparency = 0
+            
             local cl = Instance.new("TextLabel", tag)
-            cl.Name = "C"; cl.BackgroundTransparency = 1; cl.Position = UDim2.new(0,0,0.6,0); cl.Size = UDim2.new(1,0,0.4,0); cl.TextSize = 11
+            cl.Name = "C"; cl.BackgroundTransparency = 1; cl.Position = UDim2.new(0,0,0.6,0)
+            cl.Size = UDim2.new(1,0,0.4,0); cl.TextSize = 11; cl.Font = Enum.Font.SourceSans
         end
         
         tag.Adornee = isP and obj:FindFirstChild("Head") or obj:FindFirstChild("Screen", true) or obj:FindFirstChildWhichIsA("BasePart", true)
         tag.ExtentsOffset = Vector3.new(0, isP and 1.2 or 0.8, 0)
         
-        local label = tag.L
-        label.Text = txt
-        label.TextColor3 = col
+        tag.L.Text = txt
+        tag.L.TextColor3 = col
         
-        if isP and pObj then
-            local chanceLabel = tag.C
-            if _G.Show_BeastChance then
-                chanceLabel.Text = "Chance: " .. GetBeastChance(pObj) .. "%"
-                chanceLabel.Visible = true
-            else
-                chanceLabel.Visible = false
-            end
+        -- Fix: Show chance ONLY for players and ONLY if enabled
+        if isP and pObj and _G.Show_BeastChance then
+            tag.C.Text = "Chance: " .. GetBeastChance(pObj) .. "%"
+            tag.C.Visible = true
+            tag.C.TextColor3 = Color3.new(1, 1, 1)
+        else
+            tag.C.Visible = false
         end
     elseif hT then hT:Destroy() end
 end
@@ -61,6 +65,7 @@ ESPTab:CreateSection("Settings")
 ESPTab:CreateToggle({Name = "Highlights", CurrentValue = false, Callback = function(v) _G.ESP_Highlights = v end})
 ESPTab:CreateToggle({Name = "Names", CurrentValue = false, Callback = function(v) _G.ESP_Names = v end})
 ESPTab:CreateToggle({Name = "Outlines", CurrentValue = true, Callback = function(v) _G.ESP_Outlines = v end})
+
 ESPTab:CreateSection("Detection")
 ESPTab:CreateToggle({Name = "ESP Computers", CurrentValue = false, Callback = function(v) _G.ESP_PC = v end})
 ESPTab:CreateToggle({Name = "ESP Freeze Pods", CurrentValue = false, Callback = function(v) _G.ESP_Pod = v end})
