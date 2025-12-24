@@ -34,12 +34,13 @@ MainTab:CreateToggle({
     end
 })
 MainTab:CreateButton({
-    Name = "Reset Character",
+    Name = "Reset Character (Instant)",
     Callback = function()
-        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-            lp.Character.Humanoid.Health = 0
-            task.wait(0.1)
-            lp.Character:BreakJoints()
+        local char = lp.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.Health = 0
+            char:BreakJoints()
         end
     end
 })
