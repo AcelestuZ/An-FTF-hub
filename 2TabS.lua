@@ -33,37 +33,36 @@ STab:CreateToggle({
                 local hasNotified = false
                 while _G.AutoNoSeer do
                     local target = nil
-                    local possibleNames = {"HidingCloset", "HiddenCloset", "Locker", "Loker2", "Locker2", "Locker 2"}
-                    for _, name in pairs(possibleNames) do
-                        local found = workspace:FindFirstChild(name, true)
-                        if found then target = found break end
+                    for _, mod in pairs(workspace:GetDescendants()) do
+                        if mod:IsA("Model") and mod.Name == "Model" then
+                            local isLocker = false
+                            if mod:FindFirstChild("Union", true) then
+                                isLocker = true
+                            elseif mod:FindFirstChildWhichIsA("Part", true) and mod:FindFirstChildWhichIsA("Part", true):FindFirstChildWhichIsA("Decal") then
+                                isLocker = true
+                            end
+                            
+                            if isLocker then
+                                target = mod
+                                break
+                            end
+                        end
                     end
                     if not target then
-                        for _, mod in pairs(workspace:GetDescendants()) do
-                            if mod:IsA("Model") and mod.Name == "Model" then
-                                local sub = mod:FindFirstChildWhichIsA("Model")
-                                if sub and sub:FindFirstChildWhichIsA("Part") and sub:FindFirstChildWhichIsA("Part"):FindFirstChildWhichIsA("Decal") then
-                                    target = mod
-                                    break
-                                end
-                            end
+                        local altNames = {"HidingCloset", "HiddenCloset", "Locker", "Loker2", "Locker2", "Locker 2"}
+                        for _, n in pairs(altNames) do
+                            local f = workspace:FindFirstChild(n, true)
+                            if f then target = f break end
                         end
                     end
                     if target then
                         pcall(function() remote:FireServer("SetPlayerHiding", true, target) end)
                         hasNotified = false
                     elseif not hasNotified then
-                        _G.Rayfield:Notify({Title = "Errore Nascondiglio", Content = "Nessun locker trovato!", Duration = 5})
+                        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Nessun locker trovato!", Duration = 5})
                         hasNotified = true
                     end
-                    if lp.Character and lp.Character:FindFirstChild("Head") then
-                        for _, child in pairs(lp.Character.Head:GetChildren()) do
-                            if child:IsA("BillboardGui") and (child.Name == "SeenTagBillboardGui" or child.Name == "DetectedTagBillboardGui") then
-                                child:Destroy()
-                            end
-                        end
-                    end
-                    task.wait(0.3)
+                    task.wait(0.5)
                 end
                 local r = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
                 if r then r:FireServer("SetPlayerHiding", false) end
