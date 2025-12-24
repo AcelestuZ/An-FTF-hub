@@ -1,5 +1,5 @@
 -- ESP tab
-local ESPTab = _G.HubWindow:CreateTab("ESP", 4483362458)
+    local ESPTab = _G.HubWindow:CreateTab("ESP", 4483362458)
 local lp = game:GetService("Players").LocalPlayer
 
 local BadgeIcons = {
@@ -54,7 +54,7 @@ local function UpdateESP(obj, col, txt, en, isP, pObj)
         local tag = obj:FindFirstChild("HubT") or Instance.new("BillboardGui", obj)
         tag.Name = "HubT"; tag.Size = UDim2.new(0,200,0,50); tag.AlwaysOnTop = true
         tag.Adornee = targetPart
-        tag.ExtentsOffset = Vector3.new(0, isP and 0.5 or 0, 0)
+        tag.ExtentsOffset = Vector3.new(0, isP and 1.2 or 0.8, 0)
         
         local l = tag:FindFirstChild("L") or Instance.new("TextLabel", tag)
         l.Name = "L"; l.BackgroundTransparency = 1; l.Size = UDim2.new(1,0,1,0); l.Text = txt; l.TextColor3 = col; l.TextSize = 14; l.Font = 3; l.TextStrokeTransparency = 0
