@@ -1,6 +1,7 @@
 -- ESP tab
 local ESPTab = _G.HubWindow:CreateTab("ESP", 4483362458)
 local lp = game:GetService("Players").LocalPlayer
+
 local BadgeIcons = {
     ["CON"] = "rbxassetid://18940005647",
     ["DEV"] = "rbxassetid://18940006678",
@@ -10,6 +11,7 @@ local BadgeIcons = {
     ["QA"] = "rbxassetid://18940008283",
     ["VIP"] = "rbxassetid://1188562340"
 }
+
 local function GetPlayerBadgeKey(p)
     pcall(function()
         local s = p:FindFirstChild("SavedPlayerStatsModule")
@@ -28,11 +30,13 @@ local function GetPlayerBadgeKey(p)
     end)
     return k
 end
+
 local function GetBeastChance(p)
     local c = "0"
     pcall(function() local s = p:FindFirstChild("SavedPlayerStatsModule") if s and s:FindFirstChild("BeastChance") then c = tostring(s.BeastChance.Value) end end)
     return c
 end
+
 local function UpdateESP(obj, col, txt, en, isP, pObj)
     if not obj then return end
     local sh = _G.ESP_Highlights and en and (pObj ~= lp)
@@ -41,23 +45,25 @@ local function UpdateESP(obj, col, txt, en, isP, pObj)
         h.Name = "HubH"; h.FillColor = col; h.OutlineColor = Color3.new(1,1,1)
         h.OutlineTransparency = _G.ESP_Outlines and 0 or 1; h.DepthMode = 0; h.FillTransparency = isP and 0.2 or 0.85
     else if obj:FindFirstChild("HubH") then obj.HubH:Destroy() end end
+    
     if _G.ESP_Names and en and txt then
         local tag = obj:FindFirstChild("HubT") or Instance.new("BillboardGui", obj)
-        tag.Name = "HubT"; tag.Size = UDim2.new(0,200,0,70); tag.AlwaysOnTop = true
-        tag.ExtentsOffset = Vector3.new(0, isP and 2.2 or 1.2, 0)
+        tag.Name = "HubT"; tag.Size = UDim2.new(0,200,0,50); tag.AlwaysOnTop = true
+        tag.ExtentsOffset = Vector3.new(0, isP and 1.5 or 0.5, 0)
         local l = tag:FindFirstChild("L") or Instance.new("TextLabel", tag)
-        l.Name = "L"; l.BackgroundTransparency = 1; l.Size = UDim2.new(1,0,0.4,0); l.Text = txt; l.TextColor3 = col; l.TextSize = 14; l.Font = 3; l.TextStrokeTransparency = 0
+        l.Name = "L"; l.BackgroundTransparency = 1; l.Size = UDim2.new(1,0,0.5,0); l.Text = txt; l.TextColor3 = col; l.TextSize = 14; l.Font = 3; l.TextStrokeTransparency = 0
         if isP and pObj then
             local bk = GetPlayerBadgeKey(pObj)
             local img = tag:FindFirstChild("I") or Instance.new("ImageLabel", tag)
-            img.Name = "I"; img.BackgroundTransparency = 1; img.Size = UDim2.new(0,22,0,22); img.Position = UDim2.new(0.85,0,0,0)
+            img.Name = "I"; img.BackgroundTransparency = 1; img.Size = UDim2.new(0,18,0,18); img.Position = UDim2.new(0.8,0,0,0)
             if _G.Show_BadgeIcons and bk and BadgeIcons[bk] then img.Image = BadgeIcons[bk]; img.Visible = true else img.Visible = false end
             local cl = tag:FindFirstChild("C") or Instance.new("TextLabel", tag)
-            cl.Name = "C"; cl.BackgroundTransparency = 1; cl.Position = UDim2.new(0,0,0.4,0); cl.Size = UDim2.new(1,0,0.3,0); cl.TextColor3 = Color3.new(1,1,1); cl.TextSize = 12
+            cl.Name = "C"; cl.BackgroundTransparency = 1; cl.Position = UDim2.new(0,0,0.5,0); cl.Size = UDim2.new(1,0,0.4,0); cl.TextColor3 = Color3.new(1,1,1); cl.TextSize = 11
             if _G.Show_BeastChance then cl.Text = "Chance: "..GetBeastChance(pObj).."%"; cl.Visible = true else cl.Visible = false end
         end
     else if obj:FindFirstChild("HubT") then obj.HubT:Destroy() end end
 end
+
 ESPTab:CreateSection("Settings")
 ESPTab:CreateToggle({Name = "Highlights", CurrentValue = false, Callback = function(v) _G.ESP_Highlights = v end})
 ESPTab:CreateToggle({Name = "Names", CurrentValue = false, Callback = function(v) _G.ESP_Names = v end})
@@ -68,6 +74,7 @@ ESPTab:CreateToggle({Name = "ESP Freeze Pods", CurrentValue = false, Callback = 
 ESPTab:CreateToggle({Name = "ESP Exits", CurrentValue = false, Callback = function(v) _G.ESP_Exit = v end})
 ESPTab:CreateToggle({Name = "Show Badges", CurrentValue = false, Callback = function(v) _G.Show_BadgeIcons = v end})
 ESPTab:CreateToggle({Name = "Show Beast Chance", CurrentValue = false, Callback = function(v) _G.Show_BeastChance = v end})
+
 task.spawn(function()
     while task.wait(0.5) do
         for _,p in pairs(game.Players:GetPlayers()) do if p.Character then local isB = p.Character:FindFirstChild("Hammer") or p.Character:FindFirstChild("BeastPowers") UpdateESP(p.Character, isB and Color3.new(1,0,0) or Color3.new(0,1,0), (p==lp and "[YOU] " or (isB and "[B] " or "[S] "))..p.Name, true, true, p) end end
