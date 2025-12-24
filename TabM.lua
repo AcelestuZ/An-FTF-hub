@@ -99,8 +99,10 @@ MainTab:CreateToggle({
       end
    end,
 })
+
 MainTab:CreateSection("Special Abilities")
-local function JumpCloudParticle()
+
+local function SpawnJumpEffect()
     local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
         local p = Instance.new("Part")
@@ -117,39 +119,42 @@ local function JumpCloudParticle()
         game:GetService("Debris"):AddItem(p, 0.5)
     end
 end
-local canDoubleJump = false
+
+local hasJumpedOnce = false
 local hasDoubleJumped = false
+
 MainTab:CreateButton({
-    Name = "Activate Double Jump (No Cooldown)",
+    Name = "Activate Safe Double Jump",
     Callback = function()
-        if _G.DJConn then _G.DJConn:Disconnect() end
-        _G.DJConn = UIS.JumpRequest:Connect(function()
+        if _G.SafeDJ then _G.SafeDJ:Disconnect() end
+        _G.SafeDJ = UIS.JumpRequest:Connect(function()
             local char = lp.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             if hum and hrp then
-                if hum:GetState() == Enum.HumanoidStateType.Freefall and canDoubleJump and not hasDoubleJumped then
+                local state = hum:GetState()
+                if state == Enum.HumanoidStateType.Freefall and hasJumpedOnce and not hasDoubleJumped then
                     hasDoubleJumped = true
                     hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 36, hrp.AssemblyLinearVelocity.Z)
-                    task.spawn(JumpCloudParticle)
+                    task.spawn(SpawnJumpEffect)
                 end
             end
         end)
         task.spawn(function()
-            while _G.DJConn do
+            while _G.SafeDJ do
                 local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
                 if hum then
-                    local state = hum:GetState()
-                    if state == Enum.HumanoidStateType.Landed then
-                        canDoubleJump = false
+                    local s = hum:GetState()
+                    if s == Enum.HumanoidStateType.Landed then
+                        hasJumpedOnce = false
                         hasDoubleJumped = false
-                    elseif state == Enum.HumanoidStateType.Jumping then
-                        canDoubleJump = true
+                    elseif s == Enum.HumanoidStateType.Jumping then
+                        hasJumpedOnce = true
                     end
                 end
                 task.wait()
             end
         end)
-        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Double Jump Activated!", Duration = 2})
+        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Safe Double Jump Ready", Duration = 2})
     end
 })
