@@ -8,12 +8,12 @@ STab:CreateToggle({
         _G.NoPCError = v
         if v then
             task.spawn(function()
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
                 while _G.NoPCError do
-                    local remote = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
-                    if remote then
+                    pcall(function()
                         remote:FireServer("SetPlayerMinigameResult", true)
-                    end
-                    task.wait(0.1)
+                    end)
+                    task.wait(0.05)
                 end
             end)
         end
