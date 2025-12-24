@@ -1,6 +1,6 @@
 -- main
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-local Window = Rayfield:CreateWindow({
+_G.Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Window = _G.Rayfield:CreateWindow({
    Name = "Hace HUB | FtF 🏃🏢",
    LoadingTitle = "Initializing Hace HUB...",
    LoadingSubtitle = "By AcelestuZ",
@@ -15,11 +15,11 @@ _G.Show_BadgeIcons, _G.Show_BeastChance = false, false
 local baseUrl = "https://raw.githubusercontent.com/AcelestuZ/An-FTF-hub/main/"
 local function loadTab(file)
     local s, e = pcall(function() loadstring(game:HttpGet(baseUrl .. file))() end)
-    if not s then warn("Error loading: " .. file .. " | " .. e) end
+    if not s then warn("Error: " .. file .. " | " .. e) end
 end
 loadTab("TabM.lua")
 loadTab("2TabS.lua")
 loadTab("3TabB.lua")
 loadTab("4TabESP.lua")
 loadTab("5TabTP.lua")
-Rayfield:Notify({Title = "Hace HUB", Content = "Modules loaded successfully!", Duration = 3})
+_G.Rayfield:Notify({Title = "Hace HUB", Content = "Ready!", Duration = 3})
