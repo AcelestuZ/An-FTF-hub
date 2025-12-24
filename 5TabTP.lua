@@ -4,14 +4,12 @@ local lp = game:GetService("Players").LocalPlayer
 
 local function SafeTeleport(cframe, loc, check)
     if check and not workspace:FindFirstChild(check, true) then
-        local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-        Rayfield:Notify({Title = "Map Error", Content = loc .. " is not loaded!", Duration = 3})
+        _G.Rayfield:Notify({Title = "Map Error", Content = loc .. " is not loaded!", Duration = 3})
         return
     end
     if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
         lp.Character.HumanoidRootPart.CFrame = cframe
-        local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-        Rayfield:Notify({Title = "Teleport", Content = "Arrived at " .. loc, Duration = 2})
+        _G.Rayfield:Notify({Title = "Teleport", Content = "Arrived at " .. loc, Duration = 2})
     end
 end
 
