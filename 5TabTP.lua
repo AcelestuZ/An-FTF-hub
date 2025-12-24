@@ -59,66 +59,104 @@ TPTab:CreateButton({
     end
 })
 
-TPTab:CreateSection("Self-Rescue & Survival")
+local lp = game:GetService("Players").LocalPlayer
+local re = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
+
+local function applyServerBypass()
+    local mt = getrawmetatable(game)
+    local old = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local args = {...}
+        local method = getnamecallmethod()
+        if method == "FireServer" and self.Name == "RemoteEvent" then
+            if args[1] == "Input" and args[2] == "Trigger" and args[3] == false then
+                args[3] = true
+                return old(self, unpack(args))
+            end
+        end
+        return old(self, ...)
+    end)
+    setreadonly(mt, true)
+end
 
 local function universalRescue()
     pcall(function()
         local stats = lp:FindFirstChild("TempPlayerStatsModule")
-        local re = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvent")
-        local char = lp.Character
-        
         if stats then
             local m = require(stats)
             m.SetValue("StruggleProgress", 100)
             m.SetValue("IsFrozen", false)
             m.SetValue("IsDown", false)
-            m.SetValue("IsStunned", false)
             m.SetValue("Health", 100)
         end
-
-        if re then
-            re:FireServer("Input", "Struggle", true)
-        end
-
-        if char then
-            for _, v in pairs(char:GetDescendants()) do
-                if v:IsA("RopeConstraint") or v:IsA("Weld") or v:IsA("WeldConstraint") or v.Name == "Tire" or v.Name == "Cords" then
+        re:FireServer("Input", "Struggle", true)
+        if lp.Character then
+            for _, v in pairs(lp.Character:GetDescendants()) do
+                if v:IsA("RopeConstraint") or v:IsA("Weld") or v:IsA("WeldConstraint") then
                     v:Destroy()
                 end
             end
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = lp.Character:FindFirstChildOfClass("Humanoid")
             if hum then 
                 hum.PlatformStand = false
                 hum.Sit = false 
             end
-            if hrp then 
-                hrp.Anchored = false 
+            if lp.Character:FindFirstChild("HumanoidRootPart") then
+                lp.Character.HumanoidRootPart.Anchored = false
             end
         end
     end)
 end
 
+TPTab:CreateSection("Server-Side Exploits")
+
 TPTab:CreateButton({
-    Name = "INSTANT RELEASE (Tire/Pod/Cords)",
-    Callback = universalRescue
+    Name = "ACTIVATE SERVER BYPASS (Hook)",
+    Callback = function()
+        pcall(applyServerBypass)
+    end
+})
+
+TPTab:CreateButton({
+    Name = "FORCE RELEASE (Tire/Pod/Cords)",
+    Callback = function()
+        universalRescue()
+    end
 })
 
 TPTab:CreateToggle({
-    Name = "Auto-Escape Loop",
+    Name = "Auto-Escape (Server Sync)",
     CurrentValue = false,
     Callback = function(v)
         _G.AutoRescue = v
         task.spawn(function()
             while _G.AutoRescue do
-                local stats = lp:FindFirstChild("TempPlayerStatsModule")
-                if stats then
-                    local m = require(stats)
-                    if m.GetValue("IsFrozen") or m.GetValue("IsDown") or m.GetValue("IsStunned") then
-                        universalRescue()
+                pcall(function()
+                    local stats = lp:FindFirstChild("TempPlayerStatsModule")
+                    if stats then
+                        local m = require(stats)
+                        if m.GetValue("IsFrozen") or m.GetValue("IsDown") then
+                            universalRescue()
+                        end
                     end
+                end)
+                task.wait(0.4)
+            end
+        end)
+    end
+})
+
+TPTab:CreateButton({
+    Name = "INSTANT WIN (InsideArea Bypass)",
+    Callback = function()
+        pcall(function()
+            re:FireServer("SetPlayerStats", {["Escaped"] = true})
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name == "InsideArea" then
+                    firetouchinterest(lp.Character.HumanoidRootPart, v, 0)
+                    firetouchinterest(lp.Character.HumanoidRootPart, v, 1)
                 end
-                task.wait(0.3)
             end
         end)
     end
