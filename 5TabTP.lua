@@ -62,24 +62,6 @@ TPTab:CreateButton({
 local lp = game:GetService("Players").LocalPlayer
 local re = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
 
-local function applyServerBypass()
-    local mt = getrawmetatable(game)
-    local old = mt.__namecall
-    setreadonly(mt, false)
-    mt.__namecall = newcclosure(function(self, ...)
-        local args = {...}
-        local method = getnamecallmethod()
-        if method == "FireServer" and self.Name == "RemoteEvent" then
-            if args[1] == "Input" and args[2] == "Trigger" and args[3] == false then
-                args[3] = true
-                return old(self, unpack(args))
-            end
-        end
-        return old(self, ...)
-    end)
-    setreadonly(mt, true)
-end
-
 local function universalRescue()
     pcall(function()
         local stats = lp:FindFirstChild("TempPlayerStatsModule")
@@ -91,57 +73,68 @@ local function universalRescue()
             m.SetValue("Health", 100)
         end
         re:FireServer("Input", "Struggle", true)
-        if lp.Character then
-            for _, v in pairs(lp.Character:GetDescendants()) do
-                if v:IsA("RopeConstraint") or v:IsA("Weld") or v:IsA("WeldConstraint") then
+        local char = lp.Character
+        if char then
+            for _, v in pairs(char:GetDescendants()) do
+                if v:IsA("RopeConstraint") or v:IsA("Weld") or v:IsA("WeldConstraint") or v:IsA("NoCollisionConstraint") then
                     v:Destroy()
                 end
             end
-            local hum = lp.Character:FindFirstChildOfClass("Humanoid")
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local hrp = char:FindFirstChild("HumanoidRootPart")
             if hum then 
                 hum.PlatformStand = false
                 hum.Sit = false 
             end
-            if lp.Character:FindFirstChild("HumanoidRootPart") then
-                lp.Character.HumanoidRootPart.Anchored = false
+            if hrp then 
+                hrp.Anchored = false
+                hrp.CFrame = hrp.CFrame + Vector3.new(0, 5, 0)
             end
         end
     end)
 end
 
-TPTab:CreateSection("Server-Side Exploits")
+TPTab:CreateSection("Server-Side & Ghost")
 
 TPTab:CreateButton({
     Name = "ACTIVATE SERVER BYPASS (Hook)",
     Callback = function()
-        pcall(applyServerBypass)
-    end
-})
-
-TPTab:CreateButton({
-    Name = "FORCE RELEASE (Tire/Pod/Cords)",
-    Callback = function()
-        universalRescue()
+        pcall(function()
+            local mt = getrawmetatable(game)
+            local old = mt.__namecall
+            setreadonly(mt, false)
+            mt.__namecall = newcclosure(function(self, ...)
+                local args = {...}
+                if getnamecallmethod() == "FireServer" and self.Name == "RemoteEvent" then
+                    if args[1] == "Input" and args[2] == "Trigger" and args[3] == false then
+                        args[3] = true
+                        return old(self, unpack(args))
+                    end
+                end
+                return old(self, ...)
+            end)
+            setreadonly(mt, true)
+        end)
     end
 })
 
 TPTab:CreateToggle({
-    Name = "Auto-Escape (Server Sync)",
+    Name = "AUTO-ESCAPE LOOP (Release Pod/Tire)",
     CurrentValue = false,
     Callback = function(v)
-        _G.AutoRescue = v
+        _G.UniversalLoop = v
         task.spawn(function()
-            while _G.AutoRescue do
+            while _G.UniversalLoop do
                 pcall(function()
                     local stats = lp:FindFirstChild("TempPlayerStatsModule")
                     if stats then
                         local m = require(stats)
-                        if m.GetValue("IsFrozen") or m.GetValue("IsDown") then
+                        if m.GetValue("IsFrozen") or m.GetValue("IsDown") or m.GetValue("IsStunned") then
                             universalRescue()
                         end
                     end
                 end)
-                task.wait(0.4)
+                task.wait(0.1)
             end
         end)
     end
