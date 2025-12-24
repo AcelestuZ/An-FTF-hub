@@ -2,7 +2,7 @@
 local BeastTab = _G.HubWindow:CreateTab("Beast", 4483362458)
 local lp = game:GetService("Players").LocalPlayer
 BeastTab:CreateToggle({
-    Name = "Custom Beast Crawl (Vent Bypass)",
+    Name = "Custom Beast Crawl (Safe Vent)",
     CurrentValue = false,
     Callback = function(state)
         _G.BeastCrawl = state
@@ -14,39 +14,36 @@ BeastTab:CreateToggle({
             if not _G.cTrack then 
                 local a = Instance.new("Animation")
                 a.AnimationId = "rbxassetid://961932719"
-                _G.cTrack = hum:LoadAnimation(a) 
+                _G.cTrack = hum:LoadAnimation(a)
+                _G.cTrack.Priority = Enum.AnimationPriority.Action
             end 
             remote:FireServer("Input", "Crawl", true)
             hum.HipHeight = -2
-            hum.WalkSpeed = 8
-            _G.cTrack:Play(0.1, 1, 0)
+            hum.WalkSpeed = 10
             task.spawn(function()
                 while _G.BeastCrawl do
+                    if not _G.cTrack.IsPlaying then _G.cTrack:Play(0.1, 1, 0) end
                     if char then
-                        for _, part in pairs(char:GetChildren()) do
-                            if part:IsA("BasePart") and part.CanCollide then
-                                part.CanCollide = false
+                        for _, p in pairs(char:GetChildren()) do
+                            if p:IsA("BasePart") and (p.Name == "Head" or p.Name:find("Arm") or p.Name:find("Hand")) then
+                                p.CanCollide = false
                             end
                         end
                     end
-                    if hum.MoveDirection.Magnitude > 0 then
-                        _G.cTrack:AdjustSpeed(2)
-                    else
-                        _G.cTrack:AdjustSpeed(0)
-                    end
-                    task.wait()
+                    _G.cTrack:AdjustSpeed(hum.MoveDirection.Magnitude > 0 and 2 or 0)
+                    task.wait(0.1)
                 end
                 if char then
-                    for _, part in pairs(char:GetChildren()) do
-                        if part:IsA("BasePart") then part.CanCollide = true end
+                    for _, p in pairs(char:GetChildren()) do
+                        if p:IsA("BasePart") then p.CanCollide = true end
                     end
                 end
+                _G.cTrack:Stop()
             end)
         else 
             remote:FireServer("Input", "Crawl", false)
             hum.HipHeight = 0
             hum.WalkSpeed = 16
-            if _G.cTrack then _G.cTrack:Stop() end 
         end
     end
 })
@@ -67,7 +64,7 @@ BeastTab:CreateToggle({
                             pEvent:FireServer("Jumped")
                         end
                     end
-                    task.wait()
+                    task.wait(0.1)
                 end
             end)
         end
