@@ -49,17 +49,16 @@ MainTab:CreateToggle({
     CurrentValue = false,
     Callback = function(v)
         _G.RemoveBarriers = v
-        if v then
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and (obj.Name == "Barrier" or obj.Parent.Name == "LobbyCollideBox") then
-                    obj.CanCollide = false
-                    obj.Transparency = 1
-                end
+        local function process(obj)
+            if obj:IsA("BasePart") then
+                obj.CanCollide = not v
+                obj.Transparency = v and 1 or 0
             end
-        else
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and (obj.Name == "Barrier" or obj.Parent.Name == "LobbyCollideBox") then
-                    obj.CanCollide = true
+        end
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                if obj.Name == "Barrier" or obj.Name == "LobbyCollideBox" or obj.Name == "Barriers" then
+                    process(obj)
                 end
             end
         end
