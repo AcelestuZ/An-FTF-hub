@@ -23,7 +23,7 @@ STab:CreateToggle({
 })
 
 STab:CreateToggle({
-    Name = "Auto-No Seer",
+    Name = "Auto-No Seer + TP",
     CurrentValue = false,
     Callback = function(v)
         _G.AutoNoSeer = v
@@ -33,33 +33,51 @@ STab:CreateToggle({
                 local hasNotified = false
                 while _G.AutoNoSeer do
                     local target = nil
-                    for _, mod in pairs(workspace:GetDescendants()) do
-                        if mod:IsA("Model") and mod.Name == "Model" then
-                            local isLocker = false
-                            if mod:FindFirstChild("Union", true) then
-                                isLocker = true
-                            elseif mod:FindFirstChildWhichIsA("Part", true) and mod:FindFirstChildWhichIsA("Part", true):FindFirstChildWhichIsA("Decal") then
-                                isLocker = true
+                    local minDist = math.huge
+                    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+                    
+                    if hrp then
+                        for _, obj in pairs(workspace:GetDescendants()) do
+                            local isValid = false
+                            if obj:IsA("Model") then
+                                if table.find({"HidingCloset", "HiddenCloset", "Locker", "Loker2", "Locker 2"}, obj.Name) then
+                                    isValid = true
+                                elseif obj.Name == "Model" then
+                                    if obj:FindFirstChild("Union", true) then
+                                        isValid = true
+                                    elseif obj:FindFirstChildWhichIsA("Model", true) then
+                                        local subModel = obj:FindFirstChildWhichIsA("Model", true)
+                                        local p = subModel:FindFirstChildWhichIsA("Part", true)
+                                        if p and p:FindFirstChildOfClass("Decal") then
+                                            isValid = true
+                                        end
+                                    end
+                                end
                             end
-                            
-                            if isLocker then
-                                target = mod
-                                break
+
+                            if isValid then
+                                local p = obj:FindFirstChildWhichIsA("BasePart", true) or obj:FindFirstChild("Union", true)
+                                if p then
+                                    local d = (hrp.Position - p.Position).Magnitude
+                                    if d < minDist then
+                                        minDist = d
+                                        target = obj
+                                    end
+                                end
                             end
                         end
                     end
-                    if not target then
-                        local altNames = {"HidingCloset", "HiddenCloset", "Locker", "Loker2", "Locker2", "Locker 2"}
-                        for _, n in pairs(altNames) do
-                            local f = workspace:FindFirstChild(n, true)
-                            if f then target = f break end
-                        end
-                    end
+
                     if target then
-                        pcall(function() remote:FireServer("SetPlayerHiding", true, target) end)
+                        local tpPart = target:FindFirstChildWhichIsA("BasePart", true) or target:FindFirstChild("Union", true)
+                        if tpPart then
+                            hrp.CFrame = tpPart.CFrame + Vector3.new(0, 2, 0)
+                            task.wait(0.1)
+                            remote:FireServer("SetPlayerHiding", true, target)
+                        end
                         hasNotified = false
                     elseif not hasNotified then
-                        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Nessun locker trovato!", Duration = 5})
+                        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Non ci sono punti dove nascondersi!", Duration = 5})
                         hasNotified = true
                     end
                     task.wait(0.5)
