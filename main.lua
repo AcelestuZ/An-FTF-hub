@@ -1,8 +1,33 @@
 -- main
+local GUI_NAME = "Rayfield"
+
+local function resetGuiPosition()
+    local coreGui = game:GetService("CoreGui")
+    local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    
+    local target = coreGui:FindFirstChild(GUI_NAME) or playerGui:FindFirstChild(GUI_NAME)
+    
+    if target then
+        local mainFrame = target:FindFirstChild("Main", true)
+        if mainFrame and mainFrame:IsA("Frame") then
+            mainFrame.Position = UDim2.new(0.5, -mainFrame.Size.X.Offset / 2, 0.5, -mainFrame.Size.Y.Offset / 2)
+            _G.Rayfield:Notify({Title = "Hace HUB", Content = "GUI Position reset to center!", Duration = 3})
+            return true
+        end
+    end
+    return false
+end
+
+if _G.HubWindow then
+    if resetGuiPosition() then
+        return 
+    end
+end
+
 _G.Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = _G.Rayfield:CreateWindow({
    Name = "Hace HUB | FtF 🏃🏢",
-   LoadingTitle = "Caricamento Hace HUB...",
+   LoadingTitle = "Loading Hace HUB...",
    LoadingSubtitle = "By AcelestuZ",
    ConfigurationSaving = { Enabled = true, FolderName = "HaceHub_FTF" },
    KeySystem = false
@@ -25,10 +50,10 @@ local function loadTab(file)
         if func then
             pcall(func)
         else
-            warn("Errore di sintassi in " .. file .. ": " .. tostring(err))
+            warn("Syntax error in " .. file .. ": " .. tostring(err))
         end
     else
-        warn("Impossibile scaricare " .. file)
+        warn("Could not download " .. file)
     end
 end
 
@@ -38,4 +63,4 @@ loadTab("3TabB.lua")
 loadTab("4TabESP.lua")
 loadTab("5TabTP.lua")
 
-_G.Rayfield:Notify({Title = "Hace HUB", Content = "Script caricato con successo!", Duration = 3})
+_G.Rayfield:Notify({Title = "Hace HUB", Content = "Script loaded successfully!", Duration = 3})
