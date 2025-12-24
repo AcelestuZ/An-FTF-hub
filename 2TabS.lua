@@ -12,8 +12,9 @@ STab:CreateToggle({
                 while _G.NoPCError do
                     pcall(function()
                         remote:FireServer("SetPlayerMinigameResult", true)
+                        remote:FireServer("SetMinigameSuccess", true)
                     end)
-                    task.wait(0.05)
+                    task.wait()
                 end
             end)
         end
