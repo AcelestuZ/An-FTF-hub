@@ -3,9 +3,12 @@ local TPTab = _G.HubWindow:CreateTab("Teleport", 4483362458)
 local lp = game:GetService("Players").LocalPlayer
 
 local function SafeTeleport(cframe, loc, mapPath)
-    if mapPath and not workspace:FindFirstChild(mapPath, true) then
-        _G.Rayfield:Notify({Title = "Map Error", Content = loc .. " map is not loaded!", Duration = 3})
-        return
+    if mapPath then
+        local found = workspace:FindFirstChild(mapPath, true)
+        if not found then
+            _G.Rayfield:Notify({Title = "Map Error", Content = loc .. " map is not loaded!", Duration = 3})
+            return
+        end
     end
     if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
         lp.Character.HumanoidRootPart.CFrame = cframe
@@ -42,6 +45,16 @@ TPTab:CreateButton({
 
 TPTab:CreateButton({
     Name = "TP to map",
+    Callback = function()
+        local pad = workspace:FindFirstChild("OBSpawnPad", true)
+        if pad then
+            SafeTeleport(pad.CFrame + Vector3.new(0, 3, 0), "Map", nil)
+        else
+            _G.Rayfield:Notify({Title = "Error", Content = "Map not detected!", Duration = 3})
+        end
+    end
+})
+
     Callback = function()
         local pad = workspace:FindFirstChild("OBSpawnPad", true)
         if pad then
