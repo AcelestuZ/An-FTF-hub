@@ -128,3 +128,65 @@ MainTab:CreateToggle({
       end
    end,
 })
+MainTab:CreateSection("Special Abilities")
+
+local function JumpCloudParticle()
+    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        local Part_3 = Instance.new("Part")
+        Part_3.Name = "DoubleJumpCloudParticle"
+        Part_3.Transparency = 1
+        Part_3.Size = Vector3.new(0.1, 0.1, 0.1)
+        Part_3.CanCollide = false
+        Part_3.Massless = true
+        Part_3.Anchored = true
+        Part_3.CFrame = hrp.CFrame - Vector3.new(0, 3.2, 0)
+        Part_3.Parent = workspace
+        
+        local ParticleEmitter_3 = Instance.new("ParticleEmitter")
+        ParticleEmitter_3.LightInfluence = 0
+        ParticleEmitter_3.Brightness = 2
+        ParticleEmitter_3.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(0.05, 1.2), NumberSequenceKeypoint.new(1, 0.4)})
+        ParticleEmitter_3.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.7, 0), NumberSequenceKeypoint.new(1, 1)})
+        ParticleEmitter_3.Lifetime = NumberRange.new(0.3)
+        ParticleEmitter_3.Speed = NumberRange.new(12)
+        ParticleEmitter_3.Acceleration = Vector3.new(0, 4, 0)
+        ParticleEmitter_3.SpreadAngle = Vector2.new(0, 180)
+        ParticleEmitter_3.Shape = Enum.ParticleEmitterShape.Disc
+        ParticleEmitter_3.Parent = Part_3
+        ParticleEmitter_3:Emit(24)
+        game:GetService("Debris"):AddItem(Part_3, 0.5)
+    end
+end
+
+MainTab:CreateToggle({
+    Name = "Always Double Jump",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AlwaysDoubleJump = v
+        if v then
+            task.spawn(function()
+                while _G.AlwaysDoubleJump do
+                    local char = lp.Character
+                    if char then
+                        local hum = char:FindFirstChildOfClass("Humanoid")
+                        local hrp = char:FindFirstChild("HumanoidRootPart")
+                        
+                        -- Logica originale: Check Freefall (riga 590)
+                        if hum and hrp and hum:GetState() == Enum.HumanoidStateType.Freefall then
+                            -- Applichiamo la forza originale di 36 (riga 590)
+                            hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 36, hrp.AssemblyLinearVelocity.Z)
+                            
+                            -- Trigger particelle originali (riga 594)
+                            task.spawn(JumpCloudParticle)
+                            
+                            -- Rimosso il cooldown di 3 secondi (riga 591)
+                            task.wait(0.2) 
+                        end
+                    end
+                    task.wait()
+                end
+            end)
+        end
+    end
+})
