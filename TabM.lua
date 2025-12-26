@@ -107,54 +107,61 @@ local function SpawnJumpEffect()
     if hrp then
         local p = Instance.new("Part")
         p.Transparency, p.Size, p.CanCollide, p.Massless, p.Anchored = 1, Vector3.new(0.1, 0.1, 0.1), false, true, true
-        p.CFrame = hrp.CFrame - Vector3.new(0, 3.2, 0)
+        p.CFrame = hrp.CFrame - Vector3.new(0, 3, 0)
         p.Parent = workspace
         local e = Instance.new("ParticleEmitter")
         e.LightInfluence, e.Brightness = 0, 2
         e.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(0.05, 1.2), NumberSequenceKeypoint.new(1, 0.4)})
         e.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.7, 0), NumberSequenceKeypoint.new(1, 1)})
         e.Lifetime, e.Speed, e.Acceleration, e.SpreadAngle, e.Shape = NumberRange.new(0.3), NumberRange.new(12), Vector3.new(0, 4, 0), Vector2.new(0, 180), Enum.ParticleEmitterShape.Disc
+        e.Rate = 0
         e.Parent = p
-        e:Emit(24)
+        e:Emit(20)
         game:GetService("Debris"):AddItem(p, 0.5)
     end
 end
 
-local hasJumpedOnce = false
+local canDoubleJump = false
 local hasDoubleJumped = false
+local oldPower = 50 
 
 MainTab:CreateButton({
     Name = "Activate Safe Double Jump",
     Callback = function()
-        if _G.SafeDJ then _G.SafeDJ:Disconnect() end
-        _G.SafeDJ = UIS.JumpRequest:Connect(function()
-            local char = lp.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            if hum and hrp then
-                local state = hum:GetState()
-                if state == Enum.HumanoidStateType.Freefall and hasJumpedOnce and not hasDoubleJumped then
-                    hasDoubleJumped = true
-                    hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 36, hrp.AssemblyLinearVelocity.Z)
-                    task.spawn(SpawnJumpEffect)
-                end
+        local char = lp.Character or lp.CharacterAdded:Wait()
+        local hum = char:WaitForChild("Humanoid")
+        
+        -- Reset degli stati quando tocchi terra
+        hum.StateChanged:Connect(function(_, newState)
+            if newState == Enum.HumanoidStateType.Landed then
+                canDoubleJump = false
+                hasDoubleJumped = false
+            elseif newState == Enum.HumanoidStateType.Jumping then
+                canDoubleJump = true
             end
         end)
-        task.spawn(function()
-            while _G.SafeDJ do
-                local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
-                if hum then
-                    local s = hum:GetState()
-                    if s == Enum.HumanoidStateType.Landed then
-                        hasJumpedOnce = false
-                        hasDoubleJumped = false
-                    elseif s == Enum.HumanoidStateType.Jumping then
-                        hasJumpedOnce = true
+
+        -- Gestione dell'input per il secondo salto
+        UIS.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.KeyCode == Enum.KeyCode.Space then
+                local h = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+                local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+                
+                if h and hrp and canDoubleJump and not hasDoubleJumped then
+                    local state = h:GetState()
+                    if state == Enum.HumanoidStateType.Freefall or state == Enum.HumanoidStateType.Jumping then
+                        hasDoubleJumped = true
+                        canDoubleJump = false
+                        
+                        -- Applica la forza verso l'alto
+                        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 45, hrp.AssemblyLinearVelocity.Z)
+                        task.spawn(SpawnJumpEffect)
                     end
                 end
-                task.wait()
             end
         end)
-        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Safe Double Jump Ready", Duration = 2})
+        
+        _G.Rayfield:Notify({Title = "Hace HUB", Content = "Double Jump Ottimizzato!", Duration = 2})
     end
 })
