@@ -9,70 +9,51 @@ local function SafeTeleport(cframe)
     end
 end
 
-local function getBestPC()
-    local target = nil
-    local dist = math.huge
+local function getActiveComputerTrigger()
+    local targetTrigger = nil
+    local shortestDist = math.huge
     for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == "ComputerTable" and v:FindFirstChild("Screen") then
-            local model = v
-            if model.Screen.BrickColor ~= BrickColor.new("Dark green") then
-                local d = (lp.Character.HumanoidRootPart.Position - v.Base.Position).Magnitude
-                if d < dist then
-                    dist = d
-                    target = v
+        if v.Name == "ComputerTrigger" and v:IsA("BasePart") then
+            local pcModel = v.Parent
+            local screen = pcModel and pcModel:FindFirstChild("Screen")
+            if screen and screen.BrickColor ~= BrickColor.new("Dark green") then
+                local dist = (lp.Character.HumanoidRootPart.Position - v.Position).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    targetTrigger = v
                 end
             end
         end
     end
-    return target
+    return targetTrigger
 end
 
-TPTab:CreateSection("Survivor Auto-Farm")
-
-TPTab:CreateButton({
-    Name = "TP TO CLOSEST PC",
-    Callback = function()
-        local pc = getBestPC()
-        if pc and pc:FindFirstChild("Base") then
-            SafeTeleport(pc.Base.CFrame * CFrame.new(0, 3, 2))
-        end
-    end
-})
-
-TPTab:CreateToggle({
-    Name = "GOD-FINGER (No Skill Errors)",
-    CurrentValue = false,
-    Callback = function(v)
-        _G.AntiError = v
-        task.spawn(function()
-            while _G.AntiError do
-                pcall(function()
-                    for _, pc in pairs(workspace:GetDescendants()) do
-                        if pc.Name == "ComputerTable" and pc:FindFirstChild("Event") then
-                            local stats = lp:FindFirstChild("TempPlayerStatsModule")
-                            if stats then
-                                local m = require(stats)
-                                if m.GetValue("IsHacking") then
-                                    re:FireServer("Input", "Trigger", true, pc.Event)
-                                end
-                            end
-                        end
-                    end
-                end)
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
-TPTab:CreateSection("Beast Master (Kill All TP)")
-
-local function getPodData()
+local function getFreePod()
+    local bestPod = nil
+    local shortestDist = math.huge
     for _, v in pairs(workspace:GetDescendants()) do
         if v.Name == "PodTrigger" and v:FindFirstChild("Event") then
-            return v
+            local podModel = v.Parent
+            local isOccupied = false
+            local station = podModel:FindFirstChild("PlayerStation")
+            if station then
+                for _, child in pairs(station:GetChildren()) do
+                    if child:IsA("Model") and child:FindFirstChild("Humanoid") then
+                        isOccupied = true
+                        break
+                    end
+                end
+            end
+            if not isOccupied then
+                local dist = (lp.Character.HumanoidRootPart.Position - v.Position).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    bestPod = v
+                end
+            end
         end
     end
+    return bestPod
 end
 
 local function fullKillSequence(target)
@@ -87,7 +68,7 @@ local function fullKillSequence(target)
         hEvent:FireServer("HammerHit", target.Character:FindFirstChild("Right Arm") or tTorso)
         hEvent:FireServer("HammerTieUp", tTorso, tTorso.Position)
         task.wait(0.4)
-        local pod = getPodData()
+        local pod = getFreePod()
         if pod then
             SafeTeleport(pod.CFrame * CFrame.new(0, 0, 2))
             task.wait(0.3)
@@ -100,13 +81,62 @@ local function fullKillSequence(target)
     end)
 end
 
+TPTab:CreateSection("Survivor Auto-Farm (Trigger Focus)")
+
+TPTab:CreateButton({
+    Name = "TP TO PC TRIGGER",
+    Callback = function()
+        local trigger = getActiveComputerTrigger()
+        if trigger then
+            SafeTeleport(trigger.CFrame)
+        end
+    end
+})
+
+TPTab:CreateToggle({
+    Name = "GOD-FINGER (Event Fix)",
+    CurrentValue = false,
+    Callback = function(v)
+        _G.AntiError = v
+        task.spawn(function()
+            while _G.AntiError do
+                pcall(function()
+                    local stats = lp:FindFirstChild("TempPlayerStatsModule")
+                    if stats and require(stats).GetValue("IsHacking") then
+                        local currentPC = nil
+                        for _, obj in pairs(workspace:GetDescendants()) do
+                            if obj.Name == "ComputerTrigger" and (lp.Character.HumanoidRootPart.Position - obj.Position).Magnitude < 10 then
+                                currentPC = obj.Parent
+                                break
+                            end
+                        end
+                        if currentPC and currentPC:FindFirstChild("Event") then
+                            re:FireServer("Input", "Trigger", true, currentPC.Event)
+                        end
+                    end
+                end)
+                task.wait(0.1)
+            end
+        end)
+    end
+})
+
+TPTab:CreateSection("Beast Master (Kill All TP)")
+
 TPTab:CreateButton({
     Name = "EXECUTE ALL SURVIVORS",
     Callback = function()
         for _, p in pairs(game:GetService("Players"):GetPlayers()) do
             if p ~= lp and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
-                fullKillSequence(p)
-                task.wait(0.5)
+                local isBeast = false
+                pcall(function()
+                    local stats = p:FindFirstChild("TempPlayerStatsModule")
+                    if stats and require(stats).GetValue("IsBeast") then isBeast = true end
+                end)
+                if not isBeast then
+                    fullKillSequence(p)
+                    task.wait(0.6)
+                end
             end
         end
     end
