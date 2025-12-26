@@ -89,34 +89,4 @@ STab:CreateButton({
         _G.Rayfield:Notify({Title = "Hace HUB", Content = "State Reset", Duration = 2})
     end
 })
-STab:CreateSection("Test Zone")
-STab:CreateToggle({
-    Name = "Static Proxy Anti-Seer",
-    CurrentValue = false,
-    Callback = function(v)
-        _G.StaticAntiSeer = v
-        local remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent")
-        if v then
-            task.spawn(function()
-                local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-                if not hrp then return end
-                local lockers = CollectionService:GetTagged("LOCKER")
-                local targetLocker = lockers[1]
-                if not targetLocker then 
-                    _G.Rayfield:Notify({Title = "Test Hub", Content = "No Locker found!", Duration = 3})
-                    return 
-                end
-                _G.Rayfield:Notify({Title = "Test Hub", Content = "Proxy active in Locker #1", Duration = 3})
-                while _G.StaticAntiSeer do
-                    pcall(function()
-                        remote:FireServer("SetPlayerHiding", true, targetLocker)
-                    end)
-                    task.wait(0.5) 
-                end
-                remote:FireServer("SetPlayerHiding", false)
-            end)
-        else
-            remote:FireServer("SetPlayerHiding", false)
-        end
-    end
-})
+
