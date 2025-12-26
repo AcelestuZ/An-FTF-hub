@@ -4,7 +4,6 @@ local GUI_NAME = "Rayfield"
 local function resetGuiPosition()
     local coreGui = game:GetService("CoreGui")
     local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-    
     local target = coreGui:FindFirstChild(GUI_NAME) or playerGui:FindFirstChild(GUI_NAME)
     
     if target then
@@ -19,9 +18,7 @@ local function resetGuiPosition()
 end
 
 if _G.HubWindow then
-    if resetGuiPosition() then
-        return 
-    end
+    if resetGuiPosition() then return end
 end
 
 _G.Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -39,6 +36,8 @@ _G.ESP_Highlights, _G.ESP_Names, _G.ESP_Outlines = false, false, true
 _G.NoPCError, _G.FullBrightEnabled, _G.NoFogEnabled = false, false, false
 _G.ESP_PC, _G.ESP_Exit, _G.ESP_Pod = false, false, false
 _G.Show_BadgeIcons, _G.Show_BeastChance = false, false
+_G.SpeedValue = 16
+_G.LoopSpeedEnabled = false
 
 local baseUrl = "https://raw.githubusercontent.com/AcelestuZ/An-FTF-hub/main/"
 
@@ -57,6 +56,7 @@ local function loadTab(file)
     end
 end
 
+-- Loading all fixed modules
 loadTab("TabM.lua")
 loadTab("2TabS.lua")
 loadTab("3TabB.lua")
